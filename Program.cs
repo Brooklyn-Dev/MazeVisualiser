@@ -11,23 +11,56 @@ namespace MazeVisualiser
         private const ushort CellSize = 20;
         private static bool[,]? maze;
 
-        static void Main(string[] args)
+        static void Main()
         {
             ushort mazeWidth = 32;
             ushort mazeHeight = 32;
 
-            var gen = new BacktrackingGenerator();
-            maze = gen.Generate(mazeWidth, mazeHeight);
+            mazeWidth = mazeWidth % 2 == 0 ? (ushort)(mazeWidth + 1) : mazeWidth;
+            mazeHeight = mazeHeight % 2 == 0 ? (ushort)(mazeHeight + 1) : mazeHeight;
 
-            var win = new RenderWindow(new VideoMode((uint)maze.GetLength(0) * CellSize, (uint)maze.GetLength(1) * CellSize), "Maze Visualiser");
+            var gen = new BacktrackingGenerator();
+            var steps = gen.GenerateSteps(mazeWidth, mazeHeight).GetEnumerator();
+
+            maze = new bool[mazeHeight, mazeWidth];
+
+            var clock = new Clock();
+            float elapsedTime = 0f;
+            float stepInterval = 0.01f;
+            bool paused = false;
+
+            var win = new RenderWindow(new VideoMode((uint)(mazeWidth * CellSize), (uint)(mazeHeight * CellSize)), "Maze Visualiser");
             win.Closed += (_, __) => win.Close();
-            win.SetFramerateLimit(30);
+            win.SetFramerateLimit(60);
             win.SetActive(true);
 
             while (win.IsOpen)
             {
                 win.DispatchEvents();
                 win.Clear(Color.Black);
+
+                var deltaTime = clock.Restart().AsSeconds();
+                elapsedTime += deltaTime;
+
+                if (!paused)
+                {
+                    if (stepInterval <= 0f)
+                        while (steps.MoveNext())
+                        {
+                            var step = steps.Current;
+                            maze[step.Y, step.X] = step.IsPath;
+                        }
+                    else
+                        while (elapsedTime >= stepInterval)
+                        {
+                            if (!steps.MoveNext()) break;
+
+                            var step = steps.Current;
+                            maze[step.Y, step.X] = step.IsPath;
+
+                            elapsedTime -= stepInterval;
+                        }
+                }
 
                 DrawMaze(win);
 
