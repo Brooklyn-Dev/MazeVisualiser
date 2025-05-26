@@ -2,7 +2,7 @@
 
 namespace MazeVisualiser.State
 {
-    public class MazeState
+    public class MazeGenerationState
     {
         public bool[,] Maze { get; private set; }
         public IEnumerator<GeneratorStep> Steps { get; private set; }
@@ -11,7 +11,7 @@ namespace MazeVisualiser.State
         public ushort Width { get; }
         public ushort Height { get; }
 
-        public MazeState(ushort width, ushort height, IMazeGenerator generator)
+        public MazeGenerationState(ushort width, ushort height, IMazeGenerator generator)
         {
             Width = width;
             Height = height;

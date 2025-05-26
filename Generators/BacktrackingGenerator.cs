@@ -1,15 +1,9 @@
-﻿namespace MazeVisualiser.Generators
+﻿using MazeVisualiser.Utils;
+
+namespace MazeVisualiser.Generators
 {
     public class BacktrackingGenerator : IMazeGenerator
     {
-        private static readonly (sbyte, sbyte)[] Directions =
-        {
-            (0, -1),  // UP
-            (0, 1),  // DOWN
-            (-1, 0),  // LEFT
-            (1, 0)  // RIGHT
-        };
-
         private readonly Random _random = new();
 
         public IEnumerable<GeneratorStep> GenerateSteps(ushort width, ushort height)
@@ -24,7 +18,7 @@
             maze[y, x] = true;
             yield return new GeneratorStep(x, y, true);
 
-            var dirs = new List<(sbyte, sbyte)>(Directions);
+            var dirs = new List<(sbyte, sbyte)>(Directions.Cardinal);
             // Fisher-Yates shuffle
             for (int i = dirs.Count - 1; i > 0; i--)
             {

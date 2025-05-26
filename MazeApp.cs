@@ -3,6 +3,7 @@ using SFML.System;
 using SFML.Window;
 
 using MazeVisualiser.Generators;
+using MazeVisualiser.Solvers;
 using MazeVisualiser.State;
 
 namespace MazeVisualiser
@@ -11,7 +12,12 @@ namespace MazeVisualiser
     {
         private readonly RenderWindow window;
         private readonly MazeConfig config;
-        private MazeState mazeState;
+        private MazeGenerationState generationState;
+        private MazeSolvingState? solvingState = null;
+
+        private AppState state;
+        private (ushort X, ushort Y)? startPoint = null;
+        private (ushort X, ushort Y)? endPoint = null;
 
         private bool paused = false;
         private float stepInterval = 0.05f;
@@ -20,11 +26,14 @@ namespace MazeVisualiser
         public MazeApp(MazeConfig config)
         {
             this.config = config;
-            mazeState = new MazeState(config.Width, config.Height, new BacktrackingGenerator());
-            window = new RenderWindow(new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)), "Maze Visualiser");
 
+            window = new RenderWindow(new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)), "Maze Visualiser");
             window.Closed += (_, __) => window.Close();
             window.KeyPressed += OnKeyPressed;
+            window.MouseButtonPressed += OnMouseButtonPressed;
+
+            generationState = new MazeGenerationState(config.Width, config.Height, new BacktrackingGenerator());
+            state = AppState.Generating;
         }
 
         public void Run()
@@ -47,16 +56,78 @@ namespace MazeVisualiser
             }
         }
 
+        private void StartSolving()
+        {
+            if (!startPoint.HasValue || !endPoint.HasValue)
+                return;
+
+            solvingState = new MazeSolvingState(generationState.Maze, new BFSSolver(), startPoint.Value, endPoint.Value);
+            state = AppState.Solving;
+            paused = false;
+            elapsedTime = 0f;
+        }
+
         private void Update(float deltaTime)
         {
             elapsedTime += deltaTime;
 
+            switch (state)
+            {
+                case AppState.Generating:
+                    StepGeneration();
+                    break;
+
+                case AppState.Solving:
+                    StepSolving();
+                    break;
+
+                default: break;
+            }
+        }
+
+        private void StepGeneration()
+        {
             if (stepInterval <= 0f)
-                while (mazeState.Step()) { }
+            {
+                while (generationState.Step()) { }
+
+                state = AppState.Generated;
+                elapsedTime = 0f;
+                paused = false;
+            }
             else
                 while (elapsedTime >= stepInterval)
                 {
-                    if (!mazeState.Step()) break;
+                    if (!generationState.Step())
+                    {
+                        state = AppState.Generated;
+                        elapsedTime = 0f;
+                        paused = false;
+                        break;
+                    }
+
+                    elapsedTime -= stepInterval;
+                }
+        }
+
+        private void StepSolving()
+        {
+            if (solvingState == null)
+                return;
+
+            if (stepInterval <= 0f)
+                while (solvingState.Step()) { }
+            else
+                while (elapsedTime >= stepInterval)
+                {
+                    if (!solvingState.Step())
+                    {
+                        state = AppState.Solved;
+                        elapsedTime = 0f;
+                        paused = true;
+                        break;
+                    }
+
                     elapsedTime -= stepInterval;
                 }
         }
@@ -68,13 +139,45 @@ namespace MazeVisualiser
                 FillColor = Color.White
             };
 
-            for (int y = 0; y < mazeState.Height; y++)
-                for (int x = 0; x < mazeState.Width; x++)
-                    if (mazeState.Maze[y, x])
+            for (int y = 0; y < generationState.Height; y++)
+                for (int x = 0; x < generationState.Width; x++)
+                    if (generationState.Maze[y, x])
                     {
+                        rect.FillColor = Color.White;
+
+                        if ((state == AppState.Solving || state == AppState.Solved) && solvingState != null)
+                            switch (solvingState.CellStates[y, x])
+                            {
+                                case SolverStepType.Visited:
+                                    rect.FillColor = Color.Blue;
+                                    break;
+
+                                case SolverStepType.Frontier:
+                                    rect.FillColor = Color.Cyan;
+                                    break;
+
+                                case SolverStepType.Path:
+                                    rect.FillColor = Color.Yellow;
+                                    break;
+                            }
+                        
                         rect.Position = new Vector2f(x * config.CellSize, y * config.CellSize);
                         window.Draw(rect);
                     }
+
+            if (startPoint.HasValue)
+            {
+                rect.FillColor = Color.Green;
+                rect.Position = new Vector2f(startPoint.Value.X * config.CellSize, startPoint.Value.Y * config.CellSize);
+                window.Draw(rect);
+            }
+
+            if (endPoint.HasValue)
+            {
+                rect.FillColor = Color.Red;
+                rect.Position = new Vector2f(endPoint.Value.X * config.CellSize, endPoint.Value.Y * config.CellSize);
+                window.Draw(rect);
+            }
         }
 
         private void OnKeyPressed(object? sender, KeyEventArgs e)
@@ -88,7 +191,11 @@ namespace MazeVisualiser
 
                 // Restart generation
                 case Keyboard.Key.R:
-                    mazeState.Reset(new BacktrackingGenerator());
+                    state = AppState.Generating;
+                    generationState.Reset(new BacktrackingGenerator());
+                    solvingState = null;
+                    startPoint = null;
+                    endPoint = null;
                     paused = false;
                     elapsedTime = 0f;
                     break;
@@ -103,6 +210,35 @@ namespace MazeVisualiser
                     stepInterval += 0.01f;
                     break;
             }
+        }
+
+        private void OnMouseButtonPressed(object? sender, MouseButtonEventArgs e)
+        {
+            if (state != AppState.Generated)
+                return;
+
+            var x = (ushort)(e.X / config.CellSize);
+            var y = (ushort)(e.Y / config.CellSize);
+
+            if (x >= config.Width || y >= config.Height || !generationState.Maze[y, x])
+                return;
+
+            if (e.Button == Mouse.Button.Left)
+            {
+                startPoint = (x, y);
+                if (startPoint == endPoint)
+                    endPoint = null;
+            }
+
+            else if (e.Button == Mouse.Button.Right)
+            {   
+                endPoint = (x, y);
+                if (endPoint == startPoint)
+                    startPoint = null;
+            }
+
+            if (startPoint.HasValue && endPoint.HasValue)
+                StartSolving();
         }
     }
 }
