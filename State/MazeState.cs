@@ -13,8 +13,8 @@ namespace MazeVisualiser.State
 
         public MazeState(ushort width, ushort height, IMazeGenerator generator)
         {
-            Width = width % 2 == 0 ? (ushort)(width + 1) : width;
-            Height = height % 2 == 0 ? (ushort)(height + 1) : height;
+            Width = width;
+            Height = height;
 
             Reset(generator);
         }
