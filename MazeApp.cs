@@ -202,12 +202,12 @@ namespace MazeVisualiser
 
                 // Increase visualisation speed
                 case Keyboard.Key.Up:
-                    stepInterval = MathF.Max(0f, stepInterval - 0.01f);
+                    stepInterval = MathF.Max(0f, stepInterval - 0.005f);
                     break;
 
                 // Decrease visualisation speed
                 case Keyboard.Key.Down:
-                    stepInterval += 0.01f;
+                    stepInterval += 0.005f;
                     break;
             }
         }

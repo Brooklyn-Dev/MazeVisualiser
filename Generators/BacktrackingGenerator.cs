@@ -4,48 +4,67 @@ namespace MazeVisualiser.Generators
 {
     public class BacktrackingGenerator : IMazeGenerator
     {
-        private readonly Random _random = new();
-
         public IEnumerable<GeneratorStep> GenerateSteps(ushort width, ushort height)
         {
             var maze = new bool[height, width];  // default false = wall
-            foreach (var step in CarvePath(1, 1, maze, width, height))
+
+            foreach (var step in CarvePath((1, 1), maze, width, height))
                 yield return step;
         }
 
-        private IEnumerable<GeneratorStep> CarvePath(ushort x, ushort y, bool[,] maze, ushort width, ushort height)
+        private IEnumerable<GeneratorStep> CarvePath((ushort X, ushort Y) startPos, bool[,] maze, ushort width, ushort height)
         {
-            maze[y, x] = true;
-            yield return new GeneratorStep(x, y, true);
+            var stack = new Stack<(ushort X, ushort Y)>();
+            stack.Push(startPos);
 
-            var dirs = new List<(sbyte, sbyte)>(Directions.Cardinal);
-            // Fisher-Yates shuffle
-            for (int i = dirs.Count - 1; i > 0; i--)
+            while (stack.Count > 0)
             {
-                int j = _random.Next(i + 1);
-                (dirs[i], dirs[j]) = (dirs[j], dirs[i]);
-            }
+                var (x, y) = stack.Pop();
 
-            foreach (var (dx, dy) in dirs)
-            {
-                ushort newX = (ushort)(x + dx * 2);
-                ushort newY = (ushort)(y + dy * 2);
-
-                if (IsValidPosition(newX, newY, width, height) && !maze[newY, newX])
+                if (!maze[y, x])
                 {
-                    ushort midX = (ushort)(x + dx);
-                    ushort midY = (ushort)(y + dy);
+                    maze[y, x] = true;
+                    yield return new GeneratorStep(x, y, true);
+                }
 
-                    maze[midY, midX] = true;
-                    yield return new GeneratorStep(midX, midY, true);
+                var dirs = ShuffleDirections();
 
-                    foreach (var step in CarvePath(newX, newY, maze, width, height))
-                        yield return step;
+                foreach (var (dx, dy) in dirs)
+                {
+                    ushort newX = (ushort)(x + dx * 2);
+                    ushort newY = (ushort)(y + dy * 2);
+
+                    if (IsValidPosition(newX, newY, width, height) && !maze[newY, newX])
+                    {
+                        ushort midX = (ushort)(x + dx);
+                        ushort midY = (ushort)(y + dy);
+
+                        maze[midY, midX] = true;
+                        yield return new GeneratorStep(midX, midY, true);
+
+                        stack.Push((x, y));
+                        stack.Push((newX, newY));
+                        break;
+                    }
                 }
             }
         }
 
-        private bool IsValidPosition(ushort x, ushort y, ushort width, ushort height)
+        private static List<(sbyte, sbyte)> ShuffleDirections()
+        {
+            var random = new Random();
+            var dirs = new List<(sbyte, sbyte)>(Directions.Cardinal);
+            // Fisher-Yates shuffle
+            for (int i = dirs.Count - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                (dirs[i], dirs[j]) = (dirs[j], dirs[i]);
+            }
+
+            return dirs;
+        }
+
+        private static bool IsValidPosition(ushort x, ushort y, ushort width, ushort height)
             => x < width && y < height && x % 2 == 1 && y % 2 == 1;
     }
 }
