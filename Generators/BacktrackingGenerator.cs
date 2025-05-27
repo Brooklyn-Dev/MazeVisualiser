@@ -15,18 +15,17 @@ namespace MazeVisualiser.Generators
         private IEnumerable<GeneratorStep> CarvePath((ushort X, ushort Y) startPos, bool[,] maze, ushort width, ushort height)
         {
             var stack = new Stack<(ushort X, ushort Y)>();
+            var visited = new bool[height, width];
+
             stack.Push(startPos);
+            visited[startPos.Y, startPos.X] = true;
+            yield return new GeneratorStep(startPos.X, startPos.Y, GeneratorStepType.Stack);
 
             while (stack.Count > 0)
             {
-                var (x, y) = stack.Pop();
+                var (x, y) = stack.Peek();
 
-                if (!maze[y, x])
-                {
-                    maze[y, x] = true;
-                    yield return new GeneratorStep(x, y, true);
-                }
-
+                bool carved = false;
                 var dirs = ShuffleDirections();
 
                 foreach (var (dx, dy) in dirs)
@@ -39,13 +38,27 @@ namespace MazeVisualiser.Generators
                         ushort midX = (ushort)(x + dx);
                         ushort midY = (ushort)(y + dy);
 
-                        maze[midY, midX] = true;
-                        yield return new GeneratorStep(midX, midY, true);
+                        visited[midY, midX] = true;
+                        visited[newY, newX] = true;
 
-                        stack.Push((x, y));
+                        maze[midY, midX] = true;
+                        maze[newY, newX] = true;
+
+                        stack.Push((midX, midY));
                         stack.Push((newX, newY));
+
+                        yield return new GeneratorStep(midX, midY, GeneratorStepType.Stack);
+                        yield return new GeneratorStep(newX, newY, GeneratorStepType.Stack);
+
+                        carved = true;
                         break;
                     }
+                }
+
+                if (!carved)
+                {
+                    var cell = stack.Pop();
+                    yield return new GeneratorStep(cell.X, cell.Y, GeneratorStepType.Carved);
                 }
             }
         }

@@ -145,7 +145,13 @@ namespace MazeVisualiser
                     {
                         rect.FillColor = Color.White;
 
-                        if ((state == AppState.Solving || state == AppState.Solved) && solvingState != null)
+                        if (state == AppState.Generating)
+                        { 
+                            if (generationState.CellStates[y, x] == GeneratorStepType.Stack) 
+                                rect.FillColor = Color.Blue;
+                        }
+
+                        else if ((state == AppState.Solving || state == AppState.Solved) && solvingState != null)
                             switch (solvingState.CellStates[y, x])
                             {
                                 case SolverStepType.Visited:
