@@ -28,7 +28,17 @@ namespace MazeVisualiser
         {
             this.config = config;
 
-            window = new RenderWindow(new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)), "Maze Visualiser");
+            window = new RenderWindow(
+                new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)),
+                "Maze Visualiser",
+                Styles.Titlebar | Styles.Close  // Prevent window resizing
+            );
+
+            // Set window icon
+            var iconImage = new Image("favicon-32x32.png");
+            window.SetIcon(iconImage.Size.X, iconImage.Size.Y, iconImage.Pixels);
+
+            // Set window event handlesrs
             window.Closed += (_, __) => window.Close();
             window.KeyPressed += OnKeyPressed;
             window.MouseButtonPressed += OnMouseButtonPressed;

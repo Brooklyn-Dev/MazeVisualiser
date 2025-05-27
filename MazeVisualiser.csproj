@@ -11,4 +11,10 @@
     <PackageReference Include="SFML.Net" Version="2.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="favicon-32x32.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
