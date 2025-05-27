@@ -30,7 +30,7 @@ namespace MazeVisualiser
 
             window = new RenderWindow(
                 new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)),
-                "Maze Visualiser",
+                "Maze Visualiser v1.0.0",
                 Styles.Titlebar | Styles.Close  // Prevent window resizing
             );
 
@@ -38,7 +38,7 @@ namespace MazeVisualiser
             var iconImage = new Image("favicon-32x32.png");
             window.SetIcon(iconImage.Size.X, iconImage.Size.Y, iconImage.Pixels);
 
-            // Set window event handlesrs
+            // Set window event handlers
             window.Closed += (_, __) => window.Close();
             window.KeyPressed += OnKeyPressed;
             window.MouseButtonPressed += OnMouseButtonPressed;

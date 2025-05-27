@@ -8,8 +8,15 @@
         // Parses command-line arguments into MazeConfig with validation and error logging
         public static MazeConfig Parse(string[] args)
         {
+            // Check for help flag
+            if (args.Contains("--help"))
+            {
+                PrintHelp();
+                Environment.Exit(0);
+            }
+
             // Default parameter values
-            ushort width = 32, height = 32, cellSize = 20;
+            ushort width = 33, height = 33, cellSize = 20;
 
             // Maps command-line flags to actions that set config values
             var options = new Dictionary<string, Action<string>>(StringComparer.OrdinalIgnoreCase)
@@ -57,6 +64,25 @@
             if (height % 2 == 0) height++;
 
             return new MazeConfig(width, height, cellSize);
+        }
+
+        private static void PrintHelp()
+        {
+            Console.WriteLine("MazeVisualiser");
+            Console.WriteLine();
+            Console.WriteLine("  Options:");
+            Console.WriteLine("    -w, --width <integer>       Set maze width (default 33)");
+            Console.WriteLine("    -h, --height <integer>      Set maze height (default 33)");
+            Console.WriteLine("    -c, --cellsize <integer>    Set cell size in pixels (default 20)");
+            Console.WriteLine("    --help                      Show this help message");
+            Console.WriteLine();
+            Console.WriteLine("  Controls:");
+            Console.WriteLine("    SPACE  Pause visualisation");
+            Console.WriteLine("    R      Restart generation");
+            Console.WriteLine("    UP     Increase visualisation speed");
+            Console.WriteLine("    DOWN   Decrease visualisation speed");
+            Console.WriteLine("    LMB    Place solver start point");
+            Console.WriteLine("    RMB    Place solver end point");
         }
     }
 }
