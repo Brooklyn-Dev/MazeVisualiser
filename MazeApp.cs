@@ -8,6 +8,7 @@ using MazeVisualiser.State;
 
 namespace MazeVisualiser
 {
+    // Handles maze generation, solving, rendering and input events
     internal class MazeApp
     {
         private readonly RenderWindow window;
@@ -36,6 +37,7 @@ namespace MazeVisualiser
             state = AppState.Generating;
         }
 
+        // Main loop
         public void Run()
         {
             var clock = new Clock();
@@ -56,6 +58,7 @@ namespace MazeVisualiser
             }
         }
 
+        // Initialise maze solving state
         private void StartSolving()
         {
             if (!startPoint.HasValue || !endPoint.HasValue)
@@ -67,6 +70,7 @@ namespace MazeVisualiser
             elapsedTime = 0f;
         }
 
+        // Update application logic based on current state
         private void Update(float deltaTime)
         {
             elapsedTime += deltaTime;
@@ -85,6 +89,7 @@ namespace MazeVisualiser
             }
         }
 
+        // Advance maze generation by one or more steps, controlled by stepInterval
         private void StepGeneration()
         {
             if (stepInterval <= 0f)
@@ -110,6 +115,7 @@ namespace MazeVisualiser
                 }
         }
 
+        // Advance maze solving by one or more steps, controlled by stepInterval
         private void StepSolving()
         {
             if (solvingState == null)
@@ -132,6 +138,7 @@ namespace MazeVisualiser
                 }
         }
 
+        // Draws maze cells with colours coding for generation and solving states
         private void Draw()
         {
             var rect = new RectangleShape(new Vector2f(config.CellSize, config.CellSize))
@@ -186,6 +193,7 @@ namespace MazeVisualiser
             }
         }
 
+        // Handles keyboard inputs
         private void OnKeyPressed(object? sender, KeyEventArgs e)
         {
             switch (e.Code)
@@ -218,6 +226,7 @@ namespace MazeVisualiser
             }
         }
 
+        // Handles mouse inputs
         private void OnMouseButtonPressed(object? sender, MouseButtonEventArgs e)
         {
             if (state != AppState.Generated)
@@ -229,6 +238,7 @@ namespace MazeVisualiser
             if (x >= config.Width || y >= config.Height || !generationState.Maze[y, x])
                 return;
 
+            // Set solver start point
             if (e.Button == Mouse.Button.Left)
             {
                 startPoint = (x, y);
@@ -236,6 +246,7 @@ namespace MazeVisualiser
                     endPoint = null;
             }
 
+            // Set solver end point
             else if (e.Button == Mouse.Button.Right)
             {   
                 endPoint = (x, y);
@@ -243,6 +254,7 @@ namespace MazeVisualiser
                     startPoint = null;
             }
 
+            // Start solving when start and end points are defined
             if (startPoint.HasValue && endPoint.HasValue)
                 StartSolving();
         }

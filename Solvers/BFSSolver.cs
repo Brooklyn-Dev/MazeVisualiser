@@ -4,6 +4,7 @@ namespace MazeVisualiser.Solvers
 {
     public class BFSSolver : IMazeSolver
     {
+        // Performs BFS on maze, yieldingsolver steps for visualisation
         public IEnumerable<List<SolverStep>> SolveSteps(bool[,] maze, (ushort X, ushort Y) start, (ushort X, ushort Y) end)
         {
             var width = (ushort)maze.GetLength(1);
@@ -19,16 +20,18 @@ namespace MazeVisualiser.Solvers
             while (queue.Count > 0)
             {
                 var stepList = new List<SolverStep>();
-                int levelCount = queue.Count;
+                int levelCount = queue.Count;  // Number of nodes at current BFS level
 
                 for (uint i = 0; i < levelCount; i++)
                 {
                     var current = queue.Dequeue();
                     stepList.Add(new SolverStep(current.x, current.y, SolverStepType.Visited));
 
-                    foreach (var neighbour in GetNeighbours(current, width, height))
+                    // Explore all adjacent neighbours
+                    foreach (var neighbour in Directions.GetNeighbours(Directions.Cardinal, current, width, height))
                     {
                         var (nx, ny) = neighbour;
+
                         if (!IsValidStep(maze, visited, nx, ny))
                             continue;
 
@@ -38,6 +41,7 @@ namespace MazeVisualiser.Solvers
 
                         stepList.Add(new SolverStep(nx, ny, SolverStepType.Frontier));
 
+                        // If end is reached, yield path steps and stop
                         if (neighbour == end)
                         {
                             yield return stepList;
@@ -54,18 +58,7 @@ namespace MazeVisualiser.Solvers
             }
         }
 
-        private static IEnumerable<(ushort X, ushort Y)> GetNeighbours((ushort X, ushort Y) pos, ushort width, ushort height)
-        {
-            foreach (var (dx, dy) in Directions.Cardinal)
-            {
-                var nx = (ushort)(pos.X + dx);
-                var ny = (ushort)(pos.Y + dy);
-
-                if (nx < width && ny < height)
-                    yield return (nx, ny);
-            }
-        }
-
+        // Backtrack from end to start using parent map to yield solution path steps
         private static IEnumerable<SolverStep> BacktrackSteps((ushort X, ushort Y) start, (ushort X, ushort Y) end, Dictionary<(ushort, ushort), (ushort, ushort)> parent)
         {
             var current = end;
@@ -79,6 +72,7 @@ namespace MazeVisualiser.Solvers
             yield return new SolverStep(start.X, start.Y, SolverStepType.Path);
         }
 
+        // Check step is bounded, on a path cell and not visited yet
         private static bool IsValidStep(bool[,] maze, bool[,] visited, ushort x, ushort y)
             => x < maze.GetLength(1) && y < maze.GetLength(0) && maze[y, x] && !visited[y, x];
     }

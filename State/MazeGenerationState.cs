@@ -28,6 +28,7 @@ namespace MazeVisualiser.State
             Steps = Generator.GenerateSteps(Width, Height).GetEnumerator();
         }
 
+        // Advances one step in the maze generation; returns false when done
         public bool Step()
         {
             if (Steps.MoveNext())

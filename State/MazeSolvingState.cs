@@ -18,6 +18,7 @@ namespace MazeVisualiser.State
             StepsList = Solver.SolveSteps(maze, start, end).GetEnumerator();
         }
 
+        // Advances one step in the maze solving; returns false when done
         public bool Step()
         {
             if (StepsList.MoveNext())
