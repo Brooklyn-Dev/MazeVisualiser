@@ -30,7 +30,7 @@ namespace MazeVisualiser
 
             window = new RenderWindow(
                 new VideoMode((uint)(config.Width * config.CellSize), (uint)(config.Height * config.CellSize)),
-                "Maze Visualiser v1.0.0",
+                "MazeVisualiser v1.0.0",
                 Styles.Titlebar | Styles.Close  // Prevent window resizing
             );
 

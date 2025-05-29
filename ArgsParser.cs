@@ -1,4 +1,6 @@
-﻿namespace MazeVisualiser
+﻿using MazeVisualiser.Utils;
+
+namespace MazeVisualiser
 {
     // Store maze configuration parameters
     internal record MazeConfig(ushort Width, ushort Height, ushort CellSize);
@@ -11,7 +13,11 @@
             // Check for help flag
             if (args.Contains("--help"))
             {
+                ConsoleUtil.BindConsole();
+
                 PrintHelp();
+
+                ConsoleUtil.CleanupConsole();
                 Environment.Exit(0);
             }
 
@@ -68,7 +74,8 @@
 
         private static void PrintHelp()
         {
-            Console.WriteLine("MazeVisualiser");
+            Console.WriteLine();
+            Console.WriteLine("MazeVisualiser v1.0.0");
             Console.WriteLine();
             Console.WriteLine("  Options:");
             Console.WriteLine("    -w, --width <integer>       Set maze width (default 33)");
